@@ -1,29 +1,32 @@
 import * as React from "react";
-
+import BigNumber from "bignumber.js";
 import {
   useConnect,
   useAccount,
   useNetwork,
   useSigner,
   useProvider,
+  useWebSocketProvider,
   useContract,
   useContractWrite,
   useContractRead
 } from "wagmi";
 
-import StorageAbi from "./abi/StorageAbi.json";
+import SmartStorageAbi from "./contract/SmartStorageAbi.json";
 
 export const App = () => {
-  const StorageContractAddressTestnet =
-    "0x731A2F83142c6CA12aF26C5E7f7bc3a4e69A48E0";
-  const provider = useProvider();
+  let cpt = "100";
 
-  const [{ signer, err, loadsig }, getSigner] = useSigner();
-  const contract = useContract({
-    addressOrName: StorageContractAddressTestnet,
-    contractInterface: StorageAbi,
-    signerOrProvider: provider
-  });
+  const SmartStorageContractAddressTestnet =
+    "0x3703f92F254C2b36c09a04c0112f0aA5ecd78660";
+
+  const [{ userSigner, err, loadsig }, getSigner] = useSigner();
+  const [
+    { data: networkData, error: networkError, loading: networkLoad },
+    changeNetwork
+  ] = useNetwork();
+
+  let provider = useProvider();
   const [
     {
       data: { connector, connectors },
@@ -32,22 +35,26 @@ export const App = () => {
     },
     connect
   ] = useConnect();
+
   const [{ data: accountData }, disconnect] = useAccount();
-  const [
-    { data: networkData, error: networkError },
-    switchNetwork
-  ] = useNetwork();
+
+  const contract = useContract({
+    addressOrName: SmartStorageContractAddressTestnet,
+    contractInterface: SmartStorageAbi,
+    signerOrProvider: provider
+  });
+
   const [
     { data: nb, loading: nbLoad, error: nbError },
     write
   ] = useContractWrite(
     {
-      addressOrName: StorageContractAddressTestnet,
-      contractInterface: StorageAbi
+      addressOrName: SmartStorageContractAddressTestnet,
+      contractInterface: SmartStorageAbi
     },
     "store",
     {
-      args: "9"
+      args: cpt
     }
   );
   const [
@@ -55,21 +62,23 @@ export const App = () => {
     read
   ] = useContractRead(
     {
-      addressOrName: StorageContractAddressTestnet,
-      contractInterface: StorageAbi
+      addressOrName: SmartStorageContractAddressTestnet,
+      contractInterface: SmartStorageAbi
     },
-    "retrieve"
+    "getTotalStoringTransactions"
   );
   if (accountData) {
     console.debug({
       Connection: connector,
       Provider: provider,
-      Signer: signer,
+      Signer: userSigner,
       Network: networkData,
-      storageContract: contract,
-      StorageAbi: StorageAbi,
+      SmartStorageContract: contract,
+      SmartStorageAbi: SmartStorageAbi,
       contract: contract,
-      write: useContractWrite
+      read: read,
+      write: write,
+      Number: cpt
     });
     return (
       <div>
@@ -80,7 +89,10 @@ export const App = () => {
           onClick={async function () {
             console.log("Waiting updating data");
             write()
-              .then((rp) => console.log(rp))
+              .then((rp) => {
+                console.log(rp);
+                alert("TX: " + rp.data.hash);
+              })
               .catch((err) => console.error(err));
           }}
         >
@@ -89,8 +101,13 @@ export const App = () => {
         <button onClick={disconnect}>Disconnect</button>
         <button
           onClick={async function readNb() {
+            console.log("Reading nb Calls");
             read()
-              .then((rp) => console.log({ Number: rp }))
+              .then((rp) => {
+                console.log({ Number: rp });
+                alert(rp.Number);
+                cpt = rp.Number;
+              })
               .catch((err) => console.error(err));
           }}
         >
@@ -110,6 +127,14 @@ export const App = () => {
             onClick={async function () {
               connect(x)
                 .then((rep) => {
+                  console.log({
+                    changeNetwork: changeNetwork,
+                    provider: provider,
+                    connector: connector
+                  });
+                  provider = useProvider()
+                    .then((rpprov) => console.log(rpprov))
+                    .catch((errprov) => console.error(errprov));
                   console.log({ connexion: rep });
                 })
                 .catch((err) => console.error({ message: err }));
