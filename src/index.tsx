@@ -40,7 +40,7 @@ const connectors = (_config: ConnectorsConfig) => {
 
 const providers = (_config: { chainId?: number; connector?: Connector }) => {
   const network = getNetwork(_config.chainId ?? defaultChain.id);
-  //@ts-ignore
+
   const rpcUrl = rpcMap[network.chainId];
   console.log(rpcUrl);
   let wProvider = new WalletConnectProvider({
@@ -49,12 +49,20 @@ const providers = (_config: { chainId?: number; connector?: Connector }) => {
     }
   });
   wProvider.rpcUrl = rpcUrl;
-  jPropvider = new JsonRpcProvider(rpcUrl);
-  jProvider = rpcUrl;
-  return jPropvider;
+  wProvider.http.url = rpcUrl;
+  wProvider.chainId = network.chainId;
+  wProvider.enable();
+
+  jProvider = new JsonRpcProvider(rpcUrl);
+  jProvider.rpcUrl = rpcUrl;
+  if (Connector.id == "injectedConnector") {
+    return jProvider[0];
+  } else {
+    return wProvider[0];
+  }
 };
 let networkTest = getNetwork(defaultChain.id);
-let connectorTest = connectors(networkTest.chainId);
+let connectorTest = connectors(networkTest.chainId)[1];
 let providerTest = providers(networkTest.chainId, connectorTest);
 console.log({
   network: networkTest,

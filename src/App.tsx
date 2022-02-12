@@ -4,9 +4,7 @@ import {
   useConnect,
   useAccount,
   useProvider,
-  useWebSocketProvider,
   useNetwork,
-  useSigner,
   useContract,
   useContractWrite,
   useContractRead
@@ -16,11 +14,9 @@ import SmartStorageAbi from "./contract/SmartStorageAbi.json";
 
 export const App = () => {
   let cpt = "100";
-
+  let hasRead = false;
   const SmartStorageContractAddressTestnet =
     "0x3703f92F254C2b36c09a04c0112f0aA5ecd78660";
-
-  let [{ userSigner, err, loadsig }, getSigner] = useSigner();
 
   const [
     {
@@ -62,7 +58,7 @@ export const App = () => {
     { data: nbr, loading: nbrLoad, error: nbrError },
     read
   ] = useContractRead(
-      {
+    {
       addressOrName: SmartStorageContractAddressTestnet,
       contractInterface: SmartStorageAbi
     },
@@ -72,7 +68,6 @@ export const App = () => {
     console.debug({
       Connection: connector,
       Provider: provider,
-      Signer: userSigner,
       Network: networkData,
       SmartStorageContract: contract,
       SmartStorageAbi: SmartStorageAbi,
@@ -81,11 +76,21 @@ export const App = () => {
       write: write,
       Number: cpt
     });
-    return (
+    let rep = ` 
       <div>
         <p>Account address: {accountData.address}</p>
         <p>Connected to {networkData.chain?.name}</p>
         <p>Connected via {accountData.connector?.name}</p>
+    `;
+    if (hasRead) {
+      rep =
+        rep +
+        ` <p>Total Transactions sent to contract {SmartStorageContractAddressTestnet}: {nbr} </p>
+        `;
+    }
+    rep =
+      rep +
+      `
         <button
           onClick={async function () {
             console.log("Waiting updating data");
@@ -105,6 +110,7 @@ export const App = () => {
             console.log("Reading nb Calls");
             read()
               .then((rp) => {
+                hasRead = true;
                 console.log({ Number: rp });
                 alert(rp.Number);
                 cpt = rp.Number;
@@ -115,10 +121,10 @@ export const App = () => {
           Read
         </button>
       </div>
-    );
+    `;
   }
 
-  return (
+  let rep = ` 
     <div>
       <div>
         {connectors.map((x) => (
@@ -148,5 +154,5 @@ export const App = () => {
         {errorConnect && (errorConnect?.message ?? "Failed to connect")}
       </div>
     </div>
-  );
+  `;
 };
