@@ -1,3 +1,4 @@
+import WalletConnectProvider from "@walletconnect/web3-provider";
 import React, { useState, useEffect } from "react";
 
 import {
@@ -5,6 +6,7 @@ import {
   useAccount,
   useProvider,
   useNetwork,
+  useSigner,
   useContract,
   useContractWrite,
   useContractRead
@@ -14,7 +16,6 @@ import SmartStorageAbi from "./contract/SmartStorageAbi.json";
 
 export const App = () => {
   let cpt = "100";
-  let hasRead = false;
   const SmartStorageContractAddressTestnet =
     "0x3703f92F254C2b36c09a04c0112f0aA5ecd78660";
 
@@ -26,14 +27,15 @@ export const App = () => {
     },
     connect
   ] = useConnect();
+
   const [
     { data: networkData, error: networkEroor, loading: networkLoading },
     changeNetwork
   ] = useNetwork();
 
-  let provider = useProvider();
-
   const [{ data: accountData }, disconnect] = useAccount();
+  const [{ signer, loadSigner, errorSigner }, getSigner] = useSigner();
+  const provider = useProvider();
 
   const contract = useContract({
     addressOrName: SmartStorageContractAddressTestnet,
@@ -74,23 +76,19 @@ export const App = () => {
       contract: contract,
       read: read,
       write: write,
+      account: accountData,
       Number: cpt
     });
-    let rep = ` 
+    return (
       <div>
         <p>Account address: {accountData.address}</p>
         <p>Connected to {networkData.chain?.name}</p>
         <p>Connected via {accountData.connector?.name}</p>
-    `;
-    if (hasRead) {
-      rep =
-        rep +
-        ` <p>Total Transactions sent to contract {SmartStorageContractAddressTestnet}: {nbr} </p>
-        `;
-    }
-    rep =
-      rep +
-      `
+        <p>
+          Contract address `{SmartStorageContractAddressTestnet.toString()}`{" "}
+        </p>
+        <p>Nb total call requests {nbr?.toString()} </p>
+
         <button
           onClick={async function () {
             console.log("Waiting updating data");
@@ -110,10 +108,9 @@ export const App = () => {
             console.log("Reading nb Calls");
             read()
               .then((rp) => {
-                hasRead = true;
                 console.log({ Number: rp });
                 alert(rp.Number);
-                cpt = rp.Number;
+                cpt = rp.Number + 1;
               })
               .catch((err) => console.error(err));
           }}
@@ -121,10 +118,9 @@ export const App = () => {
           Read
         </button>
       </div>
-    `;
+    );
   }
-
-  let rep = ` 
+  return (
     <div>
       <div>
         {connectors.map((x) => (
@@ -134,12 +130,7 @@ export const App = () => {
             onClick={async function () {
               connect(x)
                 .then((rep) => {
-                  console.log({
-                    changeNetwork: changeNetwork,
-                    provider: provider,
-                    connector: connector
-                  });
-                  console.log({ connexion: rep, Connector: connector });
+                  console.log({ Connect: rep });
                 })
                 .catch((err) => console.error({ message: err }));
             }}
@@ -154,5 +145,5 @@ export const App = () => {
         {errorConnect && (errorConnect?.message ?? "Failed to connect")}
       </div>
     </div>
-  `;
+  );
 };

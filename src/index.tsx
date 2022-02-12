@@ -2,6 +2,7 @@ import { render } from "react-dom";
 
 // Imports
 import { getNetwork, JsonRpcProvider } from "@ethersproject/providers";
+import { providers as ethproviders, Web3Provider } from "ethers";
 import { Provider, Connector } from "wagmi";
 import { Celo, Alfajores } from "../constants";
 import { InjectedConnector } from "wagmi/connectors/injected";
@@ -42,24 +43,17 @@ const providers = (_config: { chainId?: number; connector?: Connector }) => {
   const network = getNetwork(_config.chainId ?? defaultChain.id);
 
   const rpcUrl = rpcMap[network.chainId];
-  console.log(rpcUrl);
   let wProvider = new WalletConnectProvider({
     rpc: {
       [`${network.chainId}`]: rpcUrl
     }
   });
-  wProvider.rpcUrl = rpcUrl;
-  wProvider.http.url = rpcUrl;
-  wProvider.chainId = network.chainId;
-  wProvider.enable();
+  wProvider
+    .enable()
+    .then((prov) => console.log({ Provider: wProvider }))
+    .catch((error) => console.error(error));
 
-  jProvider = new JsonRpcProvider(rpcUrl);
-  jProvider.rpcUrl = rpcUrl;
-  if (Connector.id == "injectedConnector") {
-    return jProvider[0];
-  } else {
-    return wProvider[0];
-  }
+  return new ethproviders.Web3Provider(wProvider);
 };
 let networkTest = getNetwork(defaultChain.id);
 let connectorTest = connectors(networkTest.chainId)[1];
