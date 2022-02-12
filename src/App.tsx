@@ -1,12 +1,11 @@
-import * as React from "react";
-import BigNumber from "bignumber.js";
+import React, { useState, useEffect } from "react";
+
 import {
   useConnect,
   useAccount,
+  useProvider,
   useNetwork,
   useSigner,
-  useProvider,
-  useWebSocketProvider,
   useContract,
   useContractWrite,
   useContractRead
@@ -20,25 +19,26 @@ export const App = () => {
   const SmartStorageContractAddressTestnet =
     "0x3703f92F254C2b36c09a04c0112f0aA5ecd78660";
 
-  const [{ userSigner, err, loadsig }, getSigner] = useSigner();
-  const [
-    { data: networkData, error: networkError, loading: networkLoad },
-    changeNetwork
-  ] = useNetwork();
+  let [{ userSigner, err, loadsig }, getSigner] = useSigner();
 
-  let provider = useProvider();
   const [
     {
-      data: { connector, connectors },
+      data: { connected, connector, connectors },
       errorConnect,
       loadingConnect
     },
     connect
   ] = useConnect();
+  const [
+    { data: networkData, error: networkEroor, loading: networkLoading },
+    changeNetwork
+  ] = useNetwork();
+
+  const provider = useProvider();
 
   const [{ data: accountData }, disconnect] = useAccount();
 
-  const contract = useContract({
+  let contract = useContract({
     addressOrName: SmartStorageContractAddressTestnet,
     contractInterface: SmartStorageAbi,
     signerOrProvider: provider
@@ -67,7 +67,7 @@ export const App = () => {
     },
     "getTotalStoringTransactions"
   );
-  if (accountData) {
+  if (connected) {
     console.debug({
       Connection: connector,
       Provider: provider,
@@ -132,10 +132,7 @@ export const App = () => {
                     provider: provider,
                     connector: connector
                   });
-                  provider = useProvider()
-                    .then((rpprov) => console.log(rpprov))
-                    .catch((errprov) => console.error(errprov));
-                  console.log({ connexion: rep });
+                  console.log({ connexion: rep, Connector: connector });
                 })
                 .catch((err) => console.error({ message: err }));
             }}
