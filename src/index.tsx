@@ -15,21 +15,15 @@ const defaultChain = Alfajores;
 console.debug({ chains: chains, defaultChain: defaultChain });
 
 const rpcMap = {
-  1: "",
-  2: "",
-  3: "",
-  4: "",
   44787: "https://alfajores-forno.celo-testnet.org",
   42220: "https://forno.celo.org"
 };
-
 // Set up connectors
 type ConnectorsConfig = { chainId?: number };
 const connectors = (_config: ConnectorsConfig) => {
   const network = getNetwork(_config.chainId ?? defaultChain.id);
 
   const rpcUrl = rpcMap[network.chainId];
-  console.log({ rpc: rpcUrl });
   return [
     new InjectedConnector({ chains }),
     new WalletConnectConnector({
@@ -46,23 +40,27 @@ const connectors = (_config: ConnectorsConfig) => {
 
 const providers = (_config: { chainId?: number; connector?: Connector }) => {
   const network = getNetwork(_config.chainId ?? defaultChain.id);
+  //@ts-ignore
   const rpcUrl = rpcMap[network.chainId];
-  console.log({ Nework: network });
-  const wProviders = new WalletConnectProvider({
+  console.log(rpcUrl);
+  let wProvider = new WalletConnectProvider({
     rpc: {
       [`${network.chainId}`]: rpcUrl
     }
   });
-  const JProviders = new JsonRpcProvider(rpcUrl);
-  console.log({ Jprov: JProviders, wProv: wProviders });
-  return wProviders;
+  wProvider.rpcUrl = rpcUrl;
+  jPropvider = new JsonRpcProvider(rpcUrl);
+  jProvider = rpcUrl;
+  return jPropvider;
 };
-
+let networkTest = getNetwork(defaultChain.id);
+let connectorTest = connectors(networkTest.chainId);
+let providerTest = providers(networkTest.chainId, connectorTest);
 console.log({
-  network: getNetwork(defaultChain.id),
+  network: networkTest,
   rpcMap: rpcMap,
-  connector: connectors(getNetwork(defaultChain.id)),
-  providers: providers(defaultChain.id, connectors(getNetwork(defaultChain.id)))
+  connector: connectorTest,
+  provider: providerTest
 });
 
 const rootElement = document.getElementById("root");

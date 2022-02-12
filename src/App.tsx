@@ -4,6 +4,7 @@ import {
   useConnect,
   useAccount,
   useProvider,
+  useWebSocketProvider,
   useNetwork,
   useSigner,
   useContract,
@@ -34,11 +35,11 @@ export const App = () => {
     changeNetwork
   ] = useNetwork();
 
-  const provider = useProvider();
+  let provider = useProvider();
 
   const [{ data: accountData }, disconnect] = useAccount();
 
-  let contract = useContract({
+  const contract = useContract({
     addressOrName: SmartStorageContractAddressTestnet,
     contractInterface: SmartStorageAbi,
     signerOrProvider: provider
@@ -61,7 +62,7 @@ export const App = () => {
     { data: nbr, loading: nbrLoad, error: nbrError },
     read
   ] = useContractRead(
-    {
+      {
       addressOrName: SmartStorageContractAddressTestnet,
       contractInterface: SmartStorageAbi
     },
